@@ -39,12 +39,14 @@ end
 
 Base.size(a::ArenaArray) = a.dims
 
-Base.@propagate_inbounds function Base.getindex(a::ArenaArray, i::Integer)
+@inline Base.dataids(a::ArenaArray) = (UInt(pointer(a)),)
+
+@inline function Base.getindex(a::ArenaArray, i::Integer)
     @boundscheck checkbounds(a, i)
     GC.@preserve a unsafe_load(pointer(a), i)
 end
 
-Base.@propagate_inbounds function Base.setindex!(a::ArenaArray, x, i::Integer)
+@inline function Base.setindex!(a::ArenaArray, x, i::Integer)
     @boundscheck checkbounds(a, i)
     GC.@preserve a unsafe_store!(pointer(a), x, i)
 end
@@ -69,8 +71,8 @@ find_arena_(a::AbstractArenaArray, rest) = a
 find_arena_(::Any, rest) = find_arena_(rest)
 
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{ArenaArray}}, ::Type{T}) where T
+    isbitstype(T) || return Array{T}(size(bc))
     arena = find_arena_(bc).arena::Vector{UInt8}
-    # TOOD: this needs to check that T is isbitstype
     ArenaArray{T}(arena, size(bc))
 end
 
@@ -82,6 +84,8 @@ struct ArenaWrappedArray{T, N, A} <: AbstractArenaArray{T, N}
         arena, wrapped
     )
 end
+
+@inline Base.dataids(a::ArenaWrappedArray) = Base.dataids(a.wrapped)
 
 @inline function Base.unsafe_convert(::Type{Ptr{T}}, a::ArenaWrappedArray{T}) where T
     Base.unsafe_convert(Ptr{T}, a.wrapped)
