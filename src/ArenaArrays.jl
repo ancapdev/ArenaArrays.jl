@@ -93,7 +93,7 @@ end
 
 Base.size(a::ArenaWrappedArray) = size(a.wrapped)
 
-Base.@propagate_inbounds Base.getindex(a::ArenaWrappedArray, i...) = getindex(a.wrapped, i...)
+Base.@propagate_inbounds Base.getindex(a::ArenaWrappedArray, i::Integer) = getindex(a.wrapped, i)
 
 # 
 # This is hardly a satisfying solution, but Base only ever looks the rhs operand to determine result type
