@@ -51,8 +51,8 @@ end
     GC.@preserve a unsafe_store!(pointer(a), x, i)
 end
 
-@inline function Base.similar(a::AbstractArenaArray{T, N}, ::Type{T}, dims::NTuple{N, Int}) where {T, N}
-    ArenaArray{T}(a.arena, dims)
+@inline function Base.similar(a::AbstractArenaArray{T, N}, ::Type{TT}, dims::NTuple{N, Int}) where {T, TT, N}
+    ArenaArray{TT}(a.arena, dims)
 end
 
 @inline function Base.reshape(a::ArenaArray{T, M}, dims::NTuple{N, Int}) where {T, M, N}
