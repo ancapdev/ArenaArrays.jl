@@ -1,6 +1,7 @@
 module ArenaArrays
 
 using LinearAlgebra
+using Random
 
 export AbstractArenaArray
 export ArenaArray
@@ -57,6 +58,23 @@ end
 
 @inline function Base.reshape(a::ArenaArray{T, M}, dims::NTuple{N, Int}) where {T, M, N}
     ArenaArray{T, N}(a.arena, a.offset, dims)
+end
+
+# See: https://github.com/JuliaLang/julia/blob/master/stdlib/Random/src/XoshiroSimd.jl
+function Random.rand!(
+    rng::Union{Random.TaskLocalRNG, Random.Xoshiro},
+    dst::ArenaArray{Float32},
+    ::Random.SamplerTrivial{Random.CloseOpen01{Float32}}
+)
+    GC.@preserve dst Random.XoshiroSimd.xoshiro_bulk(
+        rng,
+        convert(Ptr{UInt8}, pointer(dst)),
+        length(dst)*4,
+        Float32,
+        Random.XoshiroSimd.xoshiroWidth(),
+        Random.XoshiroSimd._bits2float
+    )
+    dst
 end
 
 Base.BroadcastStyle(::Type{<:AbstractArenaArray}) = Broadcast.ArrayStyle{ArenaArray}()
